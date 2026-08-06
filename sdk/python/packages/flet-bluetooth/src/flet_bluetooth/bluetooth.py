@@ -6,25 +6,19 @@ from typing import Optional
 
 import flet as ft
 from flet.utils import from_dict
-from flet_bluetooth.types import (
-    BluetoothAndroidScanOptions,
-    BluetoothAvailabilityChangeEvent,
-    BluetoothAvailabilityState,
-    BluetoothCharacteristicValueEvent,
-    BluetoothConnectionChangeEvent,
-    BluetoothConnectionPriority,
-    BluetoothConnectionState,
-    BluetoothDevice,
-    BluetoothLogLevel,
-    BluetoothPairingStateChangeEvent,
-    BluetoothQueueType,
-    BluetoothScanFilter,
-    BluetoothScanResultEvent,
-    BluetoothService,
-    BluetoothSubscriptionType,
-    BluetoothWebOptions,
-    unwrap_bluetooth_result,
-)
+from flet_bluetooth.types import (BluetoothAndroidScanOptions,
+                                  BluetoothAvailabilityChangeEvent,
+                                  BluetoothAvailabilityState,
+                                  BluetoothCharacteristicValueEvent,
+                                  BluetoothConnectionChangeEvent,
+                                  BluetoothConnectionPriority,
+                                  BluetoothConnectionState, BluetoothDevice,
+                                  BluetoothLogLevel,
+                                  BluetoothPairingStateChangeEvent,
+                                  BluetoothQueueType, BluetoothScanFilter,
+                                  BluetoothScanResultEvent, BluetoothService,
+                                  BluetoothSubscriptionType,
+                                  BluetoothWebOptions, unwrap_bluetooth_result)
 
 __all__ = ["Bluetooth"]
 
@@ -66,9 +60,9 @@ class Bluetooth(ft.Service):
     ] = None
     """Fires when Bluetooth adapter availability changes."""
 
-    on_connection_change: Optional[
-        ft.EventHandler[BluetoothConnectionChangeEvent]
-    ] = None
+    on_connection_change: Optional[ft.EventHandler[BluetoothConnectionChangeEvent]] = (
+        None
+    )
     """Fires when a device connection state changes."""
 
     on_characteristic_value: Optional[
@@ -274,15 +268,11 @@ class Bluetooth(ft.Service):
         """
         return bool(
             unwrap_bluetooth_result(
-                await self._invoke_method(
-                    "is_connected", {"device_id": device_id}
-                )
+                await self._invoke_method("is_connected", {"device_id": device_id})
             )
         )
 
-    async def get_connection_state(
-        self, device_id: str
-    ) -> BluetoothConnectionState:
+    async def get_connection_state(self, device_id: str) -> BluetoothConnectionState:
         """
         Get the connection state of a device.
 
@@ -296,9 +286,7 @@ class Bluetooth(ft.Service):
             BluetoothException: If the request fails.
         """
         r = unwrap_bluetooth_result(
-            await self._invoke_method(
-                "get_connection_state", {"device_id": device_id}
-            )
+            await self._invoke_method("get_connection_state", {"device_id": device_id})
         )
         return BluetoothConnectionState(r)
 
@@ -316,9 +304,7 @@ class Bluetooth(ft.Service):
             BluetoothException: If discovery fails.
         """
         r = unwrap_bluetooth_result(
-            await self._invoke_method(
-                "discover_services", {"device_id": device_id}
-            )
+            await self._invoke_method("discover_services", {"device_id": device_id})
         )
         return [from_dict(BluetoothService, s) for s in (r or [])]
 
@@ -494,7 +480,9 @@ class Bluetooth(ft.Service):
         Raises:
             BluetoothException: If unpairing fails.
         """
-        unwrap_bluetooth_result(await self._invoke_method("unpair", {"device_id": device_id}))
+        unwrap_bluetooth_result(
+            await self._invoke_method("unpair", {"device_id": device_id})
+        )
 
     async def is_paired(
         self,
@@ -569,9 +557,7 @@ class Bluetooth(ft.Service):
         """
         return int(
             unwrap_bluetooth_result(
-                await self._invoke_method(
-                    "read_rssi", {"device_id": device_id}
-                )
+                await self._invoke_method("read_rssi", {"device_id": device_id})
             )
         )
 

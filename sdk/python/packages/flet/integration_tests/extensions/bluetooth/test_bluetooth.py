@@ -1,8 +1,7 @@
-import pytest
-
 import flet as ft
 import flet.testing as ftt
 import flet_bluetooth as fbt
+import pytest
 
 
 @pytest.mark.asyncio(loop_scope="function")

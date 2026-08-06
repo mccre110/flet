@@ -24,16 +24,13 @@ async def main(page: ft.Page):
     def append_log(message: str):
         log.controls.insert(0, ft.Text(message, size=12))
         del log.controls[20:]
+        page.update()
 
     def on_characteristic_write(e: fbt.PeripheralCharacteristicWriteEvent):
-        append_log(
-            f"Write {e.characteristic_uuid}: {e.value!r} (offset={e.offset})"
-        )
+        append_log(f"Write {e.characteristic_uuid}: {e.value!r} (offset={e.offset})")
 
     def on_characteristic_read(e: fbt.PeripheralCharacteristicReadEvent):
-        append_log(
-            f"Read {e.characteristic_uuid}: {e.value!r} (offset={e.offset})"
-        )
+        append_log(f"Read {e.characteristic_uuid}: {e.value!r} (offset={e.offset})")
 
     def on_subscription_change(e: fbt.PeripheralSubscriptionChangeEvent):
         state = "subscribed" if e.is_subscribed else "unsubscribed"
@@ -45,6 +42,7 @@ async def main(page: ft.Page):
 
     def on_advertising_state_change(e: fbt.PeripheralAdvertisingStateChangeEvent):
         status.value = f"Advertising: {e.state.value}"
+        page.update()
         if e.error:
             snack(e.error)
 
@@ -80,9 +78,7 @@ async def main(page: ft.Page):
     async def check_capabilities(e: ft.Event[ft.Button]):
         try:
             caps = await peri.get_capabilities()
-            status.value = (
-                f"Peripheral mode: {caps.supports_peripheral_mode}"
-            )
+            status.value = f"Peripheral mode: {caps.supports_peripheral_mode}"
             snack(status.value)
         except fbt.BluetoothException as ex:
             status.value = str(ex)
@@ -116,6 +112,7 @@ async def main(page: ft.Page):
                 continue
             level[0] = 100 if level[0] <= 5 else level[0] - 5
             level_text.value = f"Battery level: {level[0]}%"
+            page.update()
             try:
                 await peri.update_characteristic_value(
                     BATTERY_LEVEL_UUID,

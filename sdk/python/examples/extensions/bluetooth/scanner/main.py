@@ -57,6 +57,7 @@ async def main(page: ft.Page):
                     ),
                 )
             )
+        page.update()
 
     async def flush_devices():
         nonlocal render_scheduled
@@ -71,10 +72,10 @@ async def main(page: ft.Page):
             render_scheduled = True
             page.run_task(flush_devices)
 
-
     def on_connection_change(e: fbt.BluetoothConnectionChangeEvent):
         state = "connected" if e.is_connected else "disconnected"
         status.value = f"{e.device_id}: {state}"
+        page.update()
         if e.error:
             snack(e.error)
 
@@ -161,8 +162,10 @@ async def main(page: ft.Page):
                     )
                 )
             status.value = f"Connected · {len(services)} service(s)"
+            page.update()
         except fbt.BluetoothException as ex:
             status.value = str(ex)
+            page.update()
             snack(str(ex))
 
     async def disconnect(e: ft.Event[ft.Button]):
@@ -174,8 +177,10 @@ async def main(page: ft.Page):
             await bt.disconnect(device_id)
             status.value = "Disconnected"
             services_list.controls.clear()
+            page.update()
         except fbt.BluetoothException as ex:
             status.value = str(ex)
+            page.update()
             snack(str(ex))
 
     page.add(

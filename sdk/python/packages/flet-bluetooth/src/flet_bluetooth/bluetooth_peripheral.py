@@ -3,23 +3,20 @@ from typing import Optional
 
 import flet as ft
 from flet.utils import from_dict
-from flet_bluetooth.types import (
-    GattService,
-    PeripheralAdvertisingState,
-    PeripheralAdvertisingStateChangeEvent,
-    PeripheralAvailabilityState,
-    PeripheralCapabilities,
-    PeripheralCharacteristicReadEvent,
-    PeripheralCharacteristicWriteEvent,
-    PeripheralConnectionChangeEvent,
-    PeripheralDescriptorReadEvent,
-    PeripheralDescriptorWriteEvent,
-    PeripheralManufacturerData,
-    PeripheralMtuChangeEvent,
-    PeripheralServiceAddedEvent,
-    PeripheralSubscriptionChangeEvent,
-    unwrap_bluetooth_result,
-)
+from flet_bluetooth.types import (GattService, PeripheralAdvertisingState,
+                                  PeripheralAdvertisingStateChangeEvent,
+                                  PeripheralAvailabilityState,
+                                  PeripheralCapabilities,
+                                  PeripheralCharacteristicReadEvent,
+                                  PeripheralCharacteristicWriteEvent,
+                                  PeripheralConnectionChangeEvent,
+                                  PeripheralDescriptorReadEvent,
+                                  PeripheralDescriptorWriteEvent,
+                                  PeripheralManufacturerData,
+                                  PeripheralMtuChangeEvent,
+                                  PeripheralServiceAddedEvent,
+                                  PeripheralSubscriptionChangeEvent,
+                                  unwrap_bluetooth_result)
 
 __all__ = ["BluetoothPeripheral"]
 
@@ -88,9 +85,9 @@ class BluetoothPeripheral(ft.Service):
     Fires after Dart answered a descriptor read from the value cache.
     """
 
-    on_descriptor_write: Optional[
-        ft.EventHandler[PeripheralDescriptorWriteEvent]
-    ] = None
+    on_descriptor_write: Optional[ft.EventHandler[PeripheralDescriptorWriteEvent]] = (
+        None
+    )
     """
     Fires after a descriptor write was accepted and cached.
     """
@@ -102,9 +99,9 @@ class BluetoothPeripheral(ft.Service):
     Fires when a central subscribes or unsubscribes to notifications/indications.
     """
 
-    on_connection_change: Optional[
-        ft.EventHandler[PeripheralConnectionChangeEvent]
-    ] = None
+    on_connection_change: Optional[ft.EventHandler[PeripheralConnectionChangeEvent]] = (
+        None
+    )
     """
     Fires when a central connects to or disconnects from this peripheral.
     """
@@ -141,9 +138,7 @@ class BluetoothPeripheral(ft.Service):
         Returns:
             A :class:`~flet_bluetooth.PeripheralCapabilities` snapshot.
         """
-        r = unwrap_bluetooth_result(
-            await self._invoke_method("get_capabilities")
-        )
+        r = unwrap_bluetooth_result(await self._invoke_method("get_capabilities"))
         return from_dict(PeripheralCapabilities, r or {})
 
     async def get_availability_state(self) -> PeripheralAvailabilityState:
@@ -153,9 +148,7 @@ class BluetoothPeripheral(ft.Service):
         Returns:
             A :class:`~flet_bluetooth.PeripheralAvailabilityState` value.
         """
-        r = unwrap_bluetooth_result(
-            await self._invoke_method("get_availability_state")
-        )
+        r = unwrap_bluetooth_result(await self._invoke_method("get_availability_state"))
         return PeripheralAvailabilityState(r)
 
     async def get_advertising_state(self) -> PeripheralAdvertisingState:
@@ -165,9 +158,7 @@ class BluetoothPeripheral(ft.Service):
         Returns:
             A :class:`~flet_bluetooth.PeripheralAdvertisingState` value.
         """
-        r = unwrap_bluetooth_result(
-            await self._invoke_method("get_advertising_state")
-        )
+        r = unwrap_bluetooth_result(await self._invoke_method("get_advertising_state"))
         return PeripheralAdvertisingState(r)
 
     async def start_advertising(

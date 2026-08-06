@@ -29,6 +29,9 @@ class BluetoothService extends FletService {
   /// Scan sightings are not tracked here — that set would grow unbounded.
   final Set<String> _trackedDevices = {};
 
+  /// Whether this service instance started the process-global scan.
+  bool _ownsScan = false;
+
   QueueType? _appliedQueueType;
   Duration? _appliedTimeout;
   BleLogLevel? _appliedLogLevel;
@@ -254,10 +257,12 @@ class BluetoothService extends FletService {
               webOptions: args?["web_options"],
             ),
           );
+          _ownsScan = true;
           return okResult();
 
         case "stop_scan":
           await UniversalBle.stopScan();
+          _ownsScan = false;
           return okResult();
 
         case "is_scanning":
@@ -455,9 +460,13 @@ class BluetoothService extends FletService {
     }
     _characteristicSubscriptions.clear();
     _trackedDevices.clear();
-    unawaited(UniversalBle.stopScan().catchError((Object e) {
-      debugPrint("Bluetooth.stopScan on dispose: $e");
-    }));
+    // stopScan is process-global — only stop if this instance started it.
+    if (_ownsScan) {
+      _ownsScan = false;
+      unawaited(UniversalBle.stopScan().catchError((Object e) {
+        debugPrint("Bluetooth.stopScan on dispose: $e");
+      }));
+    }
     control.removeInvokeMethodListener(_invokeMethod);
     super.dispose();
   }

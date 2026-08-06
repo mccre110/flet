@@ -216,9 +216,7 @@ class BluetoothErrorCode(Enum):
         "characteristicDoesNotSupportWriteWithoutResponse"
     )
     CHARACTERISTIC_DOES_NOT_SUPPORT_NOTIFY = "characteristicDoesNotSupportNotify"
-    CHARACTERISTIC_DOES_NOT_SUPPORT_INDICATE = (
-        "characteristicDoesNotSupportIndicate"
-    )
+    CHARACTERISTIC_DOES_NOT_SUPPORT_INDICATE = "characteristicDoesNotSupportIndicate"
     NOT_PAIRED = "notPaired"
     NOT_PAIRABLE = "notPairable"
     ALREADY_PAIRED = "alreadyPaired"
@@ -371,9 +369,7 @@ class ExclusionFilter:
     services: list[str] = field(default_factory=list)
     """Service UUIDs that identify devices to exclude."""
 
-    manufacturer_data_filter: list[ManufacturerDataFilter] = field(
-        default_factory=list
-    )
+    manufacturer_data_filter: list[ManufacturerDataFilter] = field(default_factory=list)
     """Manufacturer data filters for exclusion."""
 
     name_prefix: Optional[str] = None
@@ -390,9 +386,7 @@ class BluetoothScanFilter:
     with_name_prefix: list[str] = field(default_factory=list)
     """Include devices whose name starts with any of these prefixes."""
 
-    with_manufacturer_data: list[ManufacturerDataFilter] = field(
-        default_factory=list
-    )
+    with_manufacturer_data: list[ManufacturerDataFilter] = field(default_factory=list)
     """Include devices matching any of these manufacturer data filters."""
 
     exclusion_filters: list[ExclusionFilter] = field(default_factory=list)
