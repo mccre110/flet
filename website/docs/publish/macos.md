@@ -57,6 +57,11 @@ macOS permissions are declared through [`Info.plist`](#infoplist) privacy usage 
 app [entitlements](#entitlements). You can also use the [cross-platform permission bundles](index.md#predefined-cross-platform-permission-bundles)
 to inject common entries, then override or extend them with platform-specific values.
 
+:::note Biometric usage descriptions
+The `biometric` permission bundle injects `NSFaceIDUsageDescription` on iOS and macOS.
+Override the string via `[tool.flet.ios.info]`, `[tool.flet.macos.info]`, or `--info-plist`.
+:::
+
 ### Info.plist
 
 Add or override `Info.plist` entries for macOS builds.
