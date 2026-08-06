@@ -12,6 +12,7 @@ dependencies = [
     "flet-ads",
     "flet-audio",
     "flet-audio-recorder",
+    "flet-bluetooth",
     "flet-camera",
     "flet-charts",
     "flet-code-editor",
@@ -44,6 +45,7 @@ flet-web = { path = "../../../packages/flet-web", editable = true }
 flet-ads = { path = "../../../packages/flet-ads", editable = true }
 flet-audio = { path = "../../../packages/flet-audio", editable = true }
 flet-audio-recorder = { path = "../../../packages/flet-audio-recorder", editable = true }
+flet-bluetooth = { path = "../../../packages/flet-bluetooth", editable = true }
 flet-camera = { path = "../../../packages/flet-camera", editable = true }
 flet-charts = { path = "../../../packages/flet-charts", editable = true }
 flet-code-editor = { path = "../../../packages/flet-code-editor", editable = true }
@@ -65,6 +67,7 @@ flet = "../../../packages/flet"
 flet-ads = "../../../packages/flet-ads"
 flet-audio = "../../../packages/flet-audio"
 flet-audio-recorder = "../../../packages/flet-audio-recorder"
+flet-bluetooth = "../../../packages/flet-bluetooth"
 flet-camera = "../../../packages/flet-camera"
 flet-charts = "../../../packages/flet-charts"
 flet-code-editor = "../../../packages/flet-code-editor"
@@ -111,7 +114,9 @@ fade_out_duration = 200
 "android.permission.READ_EXTERNAL_STORAGE" = true
 "android.permission.WRITE_EXTERNAL_STORAGE" = true
 "android.permission.ACCESS_FINE_LOCATION" = { maxSdkVersion = "30" }
+"android.permission.BLUETOOTH_CONNECT" = true
 "android.permission.BLUETOOTH_SCAN" = { usesPermissionFlags = "neverForLocation" }
+"android.permission.BLUETOOTH_ADVERTISE" = true
 
 [tool.flet.android.meta_data]
 "com.google.android.gms.ads.APPLICATION_ID" = "ca-app-pub-3940256099942544~3347511713"

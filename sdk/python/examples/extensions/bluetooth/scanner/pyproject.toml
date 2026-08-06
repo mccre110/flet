@@ -1,0 +1,27 @@
+[project]
+name = "bluetooth-scanner"
+version = "1.0.0"
+description = "Scans for nearby BLE devices, connects, and lists GATT services."
+requires-python = ">=3.10"
+keywords = ["bluetooth", "ble", "scanner", "services", "async"]
+authors = [{ name = "Flet team", email = "hello@flet.dev" }]
+dependencies = ["flet", "flet-bluetooth"]
+
+[dependency-groups]
+dev = ["flet-cli", "flet-desktop", "flet-web"]
+
+[tool.flet.gallery]
+categories = ["Utility/Bluetooth"]
+
+[tool.flet.metadata]
+title = "Bluetooth scanner"
+controls = ["SafeArea", "Column", "Page", "AppBar", "Text", "Button", "Row", "Container", "Bluetooth"]
+layout_pattern = "inline-actions"
+complexity = "intermediate"
+features = ["ble scan", "connect", "discover services"]
+
+[tool.flet]
+org = "dev.flet"
+company = "Flet"
+copyright = "Copyright (C) 2023-2026 by Flet"
+permissions = ["bluetooth"]

@@ -5,6 +5,7 @@ import 'package:flet_audio/flet_audio.dart' as flet_audio;
 // --FAT_CLIENT_END--
 import 'package:flet_audio_recorder/flet_audio_recorder.dart'
     as flet_audio_recorder;
+import 'package:flet_bluetooth/flet_bluetooth.dart' as flet_bluetooth;
 import 'package:flet_camera/flet_camera.dart' as flet_camera;
 import 'package:flet_charts/flet_charts.dart' as flet_charts;
 import 'package:flet_code_editor/flet_code_editor.dart' as flet_code_editor;
@@ -49,6 +50,7 @@ void main([List<String>? args]) async {
   List<FletExtension> extensions = [
     flet_ads.Extension(),
     flet_audio_recorder.Extension(),
+    flet_bluetooth.Extension(),
     flet_camera.Extension(),
     flet_charts.Extension(),
     flet_code_editor.Extension(),

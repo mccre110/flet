@@ -1,0 +1,27 @@
+[project]
+name = "bluetooth-peripheral"
+version = "1.0.0"
+description = "Advertises a BLE battery service and updates the battery level characteristic."
+requires-python = ">=3.10"
+keywords = ["bluetooth", "ble", "peripheral", "services", "async"]
+authors = [{ name = "Flet team", email = "hello@flet.dev" }]
+dependencies = ["flet", "flet-bluetooth"]
+
+[dependency-groups]
+dev = ["flet-cli", "flet-desktop", "flet-web"]
+
+[tool.flet.gallery]
+categories = ["Utility/Bluetooth"]
+
+[tool.flet.metadata]
+title = "Bluetooth peripheral"
+controls = ["SafeArea", "Column", "Page", "AppBar", "Text", "Button", "Row", "Container", "BluetoothPeripheral"]
+layout_pattern = "inline-actions"
+complexity = "intermediate"
+features = ["ble advertise", "gatt server", "battery service"]
+
+[tool.flet]
+org = "dev.flet"
+company = "Flet"
+copyright = "Copyright (C) 2023-2026 by Flet"
+permissions = ["bluetooth"]

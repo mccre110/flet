@@ -38,5 +38,11 @@
 		<!-- Needed by `flet-geolocator` -->
 		<key>NSLocationWhenInUseUsageDescription</key>
         <string>This app needs access to location.</string>
+
+		<!-- Needed by `flet-bluetooth` -->
+		<key>NSBluetoothAlwaysUsageDescription</key>
+		<string>This app uses Bluetooth to connect to nearby devices.</string>
+		<key>NSBluetoothPeripheralUsageDescription</key>
+		<string>This app uses Bluetooth to advertise services to nearby devices.</string>
 	</dict>
 </plist>

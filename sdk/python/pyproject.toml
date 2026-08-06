@@ -13,6 +13,7 @@ dependencies = [
     "flet-ads",
     "flet-audio",
     "flet-audio-recorder",
+    "flet-bluetooth",
     "flet-camera",
     "flet-charts",
     "flet-code-editor",
@@ -39,6 +40,7 @@ flet-web = { workspace = true }
 flet-ads = { workspace = true }
 flet-audio = { workspace = true }
 flet-audio-recorder = { workspace = true }
+flet-bluetooth = { workspace = true }
 flet-camera = { workspace = true }
 flet-charts = { workspace = true }
 flet-code-editor = { workspace = true }
