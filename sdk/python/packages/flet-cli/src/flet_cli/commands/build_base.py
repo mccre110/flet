@@ -1010,9 +1010,22 @@ class BaseBuildCommand(BaseFlutterCommand):
                 macos_entitlements.update(
                     self.cross_platform_permissions[p]["macos_entitlements"]
                 )
-                android_permissions.update(
-                    self.cross_platform_permissions[p]["android_permissions"]
-                )
+                # Prefer an unrestricted grant (`True`) over a later bundle's
+                # attribute map (e.g. `maxSdkVersion`). Otherwise `--permissions
+                # location bluetooth` would let bluetooth's
+                # ACCESS_*_LOCATION={maxSdkVersion: …} overwrite location's
+                # unrestricted entries and break background geolocation.
+                for perm, value in self.cross_platform_permissions[p][
+                    "android_permissions"
+                ].items():
+                    if (
+                        perm in android_permissions
+                        and android_permissions[perm] is True
+                        and isinstance(value, dict)
+                    ):
+                        continue
+                    android_permissions[perm] = value
+
                 android_features.update(
                     self.cross_platform_permissions[p]["android_features"]
                 )
