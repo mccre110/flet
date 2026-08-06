@@ -5,22 +5,10 @@ import 'package:universal_ble/universal_ble.dart';
 
 import 'bluetooth.dart';
 
-/// GATT success status (Android ``BluetoothGatt.GATT_SUCCESS``).
 const int gattSuccess = 0x00;
-
-/// GATT read not permitted (``0x02``).
-const int gattReadNotPermitted = 0x02;
-
-/// GATT write not permitted (``0x03``).
 const int gattWriteNotPermitted = 0x03;
-
-/// GATT invalid offset (``0x07``).
 const int gattInvalidOffset = 0x07;
-
-/// GATT invalid attribute length (``0x0d``).
 const int gattInvalidAttributeLength = 0x0d;
-
-/// Practical ATT attribute value length limit used for static write checks.
 const int maxGattAttributeLength = 512;
 
 ManufacturerData? parsePeripheralManufacturerData(dynamic value) {
@@ -130,7 +118,7 @@ Uint8List sliceBleValue(Uint8List? value, int offset) {
   if (value == null || value.isEmpty || offset >= value.length) {
     return Uint8List(0);
   }
-  if (offset <= 0) return Uint8List.fromList(value);
+  if (offset <= 0) return value;
   return Uint8List.fromList(value.sublist(offset));
 }
 

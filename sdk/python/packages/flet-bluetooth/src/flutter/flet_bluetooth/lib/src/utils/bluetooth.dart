@@ -4,17 +4,12 @@ import 'package:flet/flet.dart';
 import 'package:universal_ble/universal_ble.dart';
 
 Uint8List parseBytes(dynamic value, [Uint8List? defaultValue]) {
-  if (value == null) {
-    return defaultValue ?? Uint8List(0);
-  }
-  if (value is Uint8List) {
-    return value;
+  final converted = convertToUint8List(value);
+  if (converted != null) {
+    return converted;
   }
   if (value is ByteBuffer) {
     return value.asUint8List();
-  }
-  if (value is List) {
-    return Uint8List.fromList(value.cast<int>());
   }
   return defaultValue ?? Uint8List(0);
 }

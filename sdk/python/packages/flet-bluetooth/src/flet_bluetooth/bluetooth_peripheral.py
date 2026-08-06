@@ -2,6 +2,7 @@ from dataclasses import field
 from typing import Optional
 
 import flet as ft
+from flet.utils import from_dict
 from flet_bluetooth.types import (
     GattService,
     PeripheralAdvertisingState,
@@ -143,7 +144,7 @@ class BluetoothPeripheral(ft.Service):
         r = unwrap_bluetooth_result(
             await self._invoke_method("get_capabilities")
         )
-        return PeripheralCapabilities(**(r or {}))
+        return from_dict(PeripheralCapabilities, r or {})
 
     async def get_availability_state(self) -> PeripheralAvailabilityState:
         """

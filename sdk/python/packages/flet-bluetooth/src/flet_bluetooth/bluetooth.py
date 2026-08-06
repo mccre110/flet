@@ -352,11 +352,7 @@ class Bluetooth(ft.Service):
                 },
             )
         )
-        if r is None:
-            return b""
-        if isinstance(r, (bytes, bytearray, memoryview)):
-            return bytes(r)
-        return bytes(r)
+        return b"" if r is None else bytes(r)
 
     async def write_characteristic(
         self,

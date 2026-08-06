@@ -7,6 +7,14 @@ import 'package:universal_ble/universal_ble.dart';
 
 import 'utils/bluetooth.dart';
 
+class _UnknownBluetoothMethod implements Exception {
+  final String name;
+  const _UnknownBluetoothMethod(this.name);
+
+  @override
+  String toString() => "Unknown Bluetooth method: $name";
+}
+
 class BluetoothService extends FletService {
   BluetoothService({required super.control});
 
@@ -16,8 +24,18 @@ class BluetoothService extends FletService {
   final Map<String, StreamSubscription<bool>> _pairingSubscriptions = {};
   final Map<String, StreamSubscription<Uint8List>>
       _characteristicSubscriptions = {};
-  final Map<String, String> _characteristicServiceMap = {};
-  final Set<String> _knownDevices = {};
+
+  /// Devices we explicitly care about for connection/pairing streams.
+  /// Scan sightings are not tracked here — that set would grow unbounded.
+  final Set<String> _trackedDevices = {};
+
+  QueueType? _appliedQueueType;
+  Duration? _appliedTimeout;
+  BleLogLevel? _appliedLogLevel;
+  bool? _wantScan;
+  bool? _wantAvailability;
+  bool? _wantConnection;
+  bool? _wantPairing;
 
   @override
   void init() {
@@ -41,55 +59,79 @@ class BluetoothService extends FletService {
       control.getString("queue_type"),
       QueueType.global,
     )!;
-    UniversalBle.queueType = queueType;
+    if (_appliedQueueType != queueType) {
+      UniversalBle.queueType = queueType;
+      _appliedQueueType = queueType;
+    }
 
     // Python None => upstream default of 10 seconds.
-    UniversalBle.timeout = control.getDuration(
+    final timeout = control.getDuration(
       "command_timeout",
       const Duration(seconds: 10),
     );
+    if (_appliedTimeout != timeout) {
+      UniversalBle.timeout = timeout;
+      _appliedTimeout = timeout;
+    }
 
     final logLevel = parseEnum(
       BleLogLevel.values,
       control.getString("log_level"),
       BleLogLevel.none,
     )!;
-    unawaited(UniversalBle.setLogLevel(logLevel));
+    if (_appliedLogLevel != logLevel) {
+      unawaited(UniversalBle.setLogLevel(logLevel));
+      _appliedLogLevel = logLevel;
+    }
   }
 
   void registerEvents() {
-    _scanSubscription?.cancel();
-    _scanSubscription = null;
-    if (control.hasEventHandler("scan_result")) {
-      _scanSubscription = UniversalBle.scanStream.listen(
-        (device) {
-          _knownDevices.add(device.deviceId);
-          control.triggerEvent("scan_result", {
-            "device": bleDeviceToMap(device),
-          });
-        },
-        onError: (Object error) {
-          control.triggerEvent("error", error.toString());
-        },
-      );
+    final wantScan = control.hasEventHandler("scan_result");
+    final wantAvailability = control.hasEventHandler("availability_change");
+    final wantConnection = control.hasEventHandler("connection_change");
+    final wantPairing = control.hasEventHandler("pairing_state_change");
+
+    if (_wantScan != wantScan) {
+      _scanSubscription?.cancel();
+      _scanSubscription = null;
+      if (wantScan) {
+        _scanSubscription = UniversalBle.scanStream.listen(
+          (device) {
+            control.triggerEvent("scan_result", {
+              "device": bleDeviceToMap(device),
+            });
+          },
+          onError: (Object error) {
+            control.triggerEvent("error", error.toString());
+          },
+        );
+      }
+      _wantScan = wantScan;
     }
 
-    _availabilitySubscription?.cancel();
-    _availabilitySubscription = null;
-    if (control.hasEventHandler("availability_change")) {
-      _availabilitySubscription = UniversalBle.availabilityStream.listen(
-        (state) {
-          control.triggerEvent("availability_change", {
-            "state": state.name,
-          });
-        },
-        onError: (Object error) {
-          control.triggerEvent("error", error.toString());
-        },
-      );
+    if (_wantAvailability != wantAvailability) {
+      _availabilitySubscription?.cancel();
+      _availabilitySubscription = null;
+      if (wantAvailability) {
+        _availabilitySubscription = UniversalBle.availabilityStream.listen(
+          (state) {
+            control.triggerEvent("availability_change", {
+              "state": state.name,
+            });
+          },
+          onError: (Object error) {
+            control.triggerEvent("error", error.toString());
+          },
+        );
+      }
+      _wantAvailability = wantAvailability;
     }
 
-    _resyncDeviceSubscriptions();
+    if (_wantConnection != wantConnection || _wantPairing != wantPairing) {
+      _wantConnection = wantConnection;
+      _wantPairing = wantPairing;
+      _resyncDeviceSubscriptions();
+    }
   }
 
   void _resyncDeviceSubscriptions() {
@@ -102,56 +144,55 @@ class BluetoothService extends FletService {
     }
     _pairingSubscriptions.clear();
 
-    final listenConnection = control.hasEventHandler("connection_change");
-    final listenPairing = control.hasEventHandler("pairing_state_change");
+    final listenConnection = _wantConnection == true;
+    final listenPairing = _wantPairing == true;
     if (!listenConnection && !listenPairing) {
       return;
     }
 
-    for (final deviceId in _knownDevices) {
-      if (listenConnection) {
-        _connectionSubscriptions[deviceId] =
-            UniversalBle.connectionStream(deviceId).listen(
-          (isConnected) {
-            control.triggerEvent("connection_change", {
-              "device_id": deviceId,
-              "is_connected": isConnected,
-              "state": isConnected
-                  ? BleConnectionState.connected.name
-                  : BleConnectionState.disconnected.name,
-            });
-          },
-          onError: (Object error) {
-            control.triggerEvent("error", error.toString());
-          },
-        );
-      }
-      if (listenPairing) {
-        _pairingSubscriptions[deviceId] =
-            UniversalBle.pairingStateStream(deviceId).listen(
-          (isPaired) {
-            control.triggerEvent("pairing_state_change", {
-              "device_id": deviceId,
-              "is_paired": isPaired,
-            });
-          },
-          onError: (Object error) {
-            control.triggerEvent("error", error.toString());
-          },
-        );
-      }
+    for (final deviceId in _trackedDevices) {
+      _listenDevice(deviceId);
     }
   }
 
-  void _ensureDeviceTracked(String deviceId) {
-    if (_knownDevices.add(deviceId)) {
-      _resyncDeviceSubscriptions();
-    } else if (!_connectionSubscriptions.containsKey(deviceId) &&
-        control.hasEventHandler("connection_change")) {
-      _resyncDeviceSubscriptions();
-    } else if (!_pairingSubscriptions.containsKey(deviceId) &&
-        control.hasEventHandler("pairing_state_change")) {
-      _resyncDeviceSubscriptions();
+  void _listenDevice(String deviceId) {
+    if (_wantConnection == true &&
+        !_connectionSubscriptions.containsKey(deviceId)) {
+      _connectionSubscriptions[deviceId] =
+          UniversalBle.connectionStream(deviceId).listen(
+        (isConnected) {
+          control.triggerEvent("connection_change", {
+            "device_id": deviceId,
+            "is_connected": isConnected,
+            "state": isConnected
+                ? BleConnectionState.connected.name
+                : BleConnectionState.disconnected.name,
+          });
+        },
+        onError: (Object error) {
+          control.triggerEvent("error", error.toString());
+        },
+      );
+    }
+    if (_wantPairing == true && !_pairingSubscriptions.containsKey(deviceId)) {
+      _pairingSubscriptions[deviceId] =
+          UniversalBle.pairingStateStream(deviceId).listen(
+        (isPaired) {
+          control.triggerEvent("pairing_state_change", {
+            "device_id": deviceId,
+            "is_paired": isPaired,
+          });
+        },
+        onError: (Object error) {
+          control.triggerEvent("error", error.toString());
+        },
+      );
+    }
+  }
+
+  void _trackDevice(String deviceId) {
+    if (_trackedDevices.add(deviceId)) {
+      _listenDevice(deviceId);
     }
   }
 
@@ -164,16 +205,14 @@ class BluetoothService extends FletService {
     String characteristicUuid,
   ) {
     final key = _charKey(deviceId, characteristicUuid);
-    _characteristicServiceMap[key] = serviceUuid;
     _characteristicSubscriptions[key]?.cancel();
     _characteristicSubscriptions[key] =
         UniversalBle.characteristicValueStream(deviceId, characteristicUuid)
             .listen(
       (value) {
-        final service = _characteristicServiceMap[key] ?? serviceUuid;
         control.triggerEvent("characteristic_value", {
           "device_id": deviceId,
-          "service_uuid": service,
+          "service_uuid": serviceUuid,
           "characteristic_uuid": characteristicUuid,
           "value": value,
         });
@@ -231,14 +270,13 @@ class BluetoothService extends FletService {
             withServices: withServices,
           );
           for (final device in devices) {
-            _knownDevices.add(device.deviceId);
+            _trackDevice(device.deviceId);
           }
-          _resyncDeviceSubscriptions();
           return okResult(devices.map(bleDeviceToMap).toList());
 
         case "connect":
           final deviceId = args["device_id"] as String;
-          _ensureDeviceTracked(deviceId);
+          _trackDevice(deviceId);
           await UniversalBle.connect(
             deviceId,
             autoConnect: parseBool(args?["auto_connect"], false)!,
@@ -291,10 +329,9 @@ class BluetoothService extends FletService {
             final deviceId = args["device_id"] as String;
             final serviceUuid = args["service_uuid"] as String;
             final characteristicUuid = args["characteristic_uuid"] as String;
-            // Default matches Python: BluetoothSubscriptionType.NOTIFICATIONS
             final typeName = (args?["subscription_type"] as String?) ??
                 "notifications";
-            _ensureDeviceTracked(deviceId);
+            _trackDevice(deviceId);
             if (typeName.toLowerCase() == "indications") {
               await UniversalBle.subscribeIndications(
                 deviceId,
@@ -328,14 +365,13 @@ class BluetoothService extends FletService {
             );
             final key = _charKey(deviceId, characteristicUuid);
             await _characteristicSubscriptions.remove(key)?.cancel();
-            _characteristicServiceMap.remove(key);
             return okResult();
           }
 
         case "pair":
           {
             final deviceId = args["device_id"] as String;
-            _ensureDeviceTracked(deviceId);
+            _trackDevice(deviceId);
             await UniversalBle.pair(
               deviceId,
               pairingCommand: parsePairingCommand(args),
@@ -392,14 +428,11 @@ class BluetoothService extends FletService {
           return okResult();
 
         default:
-          throw Exception("Unknown Bluetooth method: $name");
+          throw _UnknownBluetoothMethod(name);
       }
+    } on _UnknownBluetoothMethod {
+      rethrow;
     } catch (error) {
-      // Unknown methods should still surface as invoke errors.
-      if (error is Exception &&
-          error.toString().contains("Unknown Bluetooth method")) {
-        rethrow;
-      }
       return errorResult(error);
     }
   }
@@ -421,8 +454,10 @@ class BluetoothService extends FletService {
       sub.cancel();
     }
     _characteristicSubscriptions.clear();
-    _characteristicServiceMap.clear();
-    UniversalBle.stopScan().catchError((_) {});
+    _trackedDevices.clear();
+    unawaited(UniversalBle.stopScan().catchError((Object e) {
+      debugPrint("Bluetooth.stopScan on dispose: $e");
+    }));
     control.removeInvokeMethodListener(_invokeMethod);
     super.dispose();
   }

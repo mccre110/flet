@@ -21,7 +21,6 @@ __all__ = [
     "BluetoothAvailabilityChangeEvent",
     "BluetoothAvailabilityState",
     "BluetoothCharacteristic",
-    "BluetoothCharacteristicProperty",
     "BluetoothCharacteristicValueEvent",
     "BluetoothConnectionChangeEvent",
     "BluetoothConnectionPriority",
@@ -136,10 +135,6 @@ class CharacteristicProperty(Enum):
     INDICATE = "indicate"
     AUTHENTICATED_SIGNED_WRITES = "authenticatedSignedWrites"
     EXTENDED_PROPERTIES = "extendedProperties"
-
-
-# Client-facing alias.
-BluetoothCharacteristicProperty = CharacteristicProperty
 
 
 class BluetoothAndroidScanMode(Enum):

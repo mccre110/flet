@@ -9,6 +9,14 @@ import 'package:universal_ble/universal_ble.dart';
 import 'utils/bluetooth.dart';
 import 'utils/bluetooth_peripheral.dart';
 
+class _UnknownBluetoothPeripheralMethod implements Exception {
+  final String name;
+  const _UnknownBluetoothPeripheralMethod(this.name);
+
+  @override
+  String toString() => "Unknown BluetoothPeripheral method: $name";
+}
+
 class BluetoothPeripheralService extends FletService {
   BluetoothPeripheralService({required super.control});
 
@@ -20,8 +28,15 @@ class BluetoothPeripheralService extends FletService {
   final Set<String> _writableDescriptors = {};
 
   String? _lastServicesFingerprint;
-  bool _ownsHandlers = false;
+  List<String> _cachedServiceUuids = const [];
   bool _syncingServices = false;
+  bool _syncPending = false;
+
+  bool? _wantAdvertisingState;
+  bool? _wantSubscription;
+  bool? _wantConnection;
+  bool? _wantServiceAdded;
+  bool? _wantMtu;
 
   StreamSubscription<BlePeripheralAdvertisingStateChanged>?
       _advertisingStateSubscription;
@@ -45,7 +60,6 @@ class BluetoothPeripheralService extends FletService {
       );
     }
     _activeInstance = this;
-    _ownsHandlers = true;
 
     control.addInvokeMethodListener(_invokeMethod);
     _installHandlers();
@@ -80,72 +94,92 @@ class BluetoothPeripheralService extends FletService {
   }
 
   void registerEvents() {
-    _advertisingStateSubscription?.cancel();
-    _advertisingStateSubscription = null;
-    _subscriptionSubscription?.cancel();
-    _subscriptionSubscription = null;
-    _connectionSubscription?.cancel();
-    _connectionSubscription = null;
-    _serviceAddedSubscription?.cancel();
-    _serviceAddedSubscription = null;
-    _mtuSubscription?.cancel();
-    _mtuSubscription = null;
+    final wantAdvertising = control.hasEventHandler("advertising_state_change") ||
+        control.hasEventHandler("error");
+    final wantSubscription = control.hasEventHandler("subscription_change");
+    final wantConnection = control.hasEventHandler("connection_change");
+    final wantServiceAdded = control.hasEventHandler("service_added");
+    final wantMtu = control.hasEventHandler("mtu_change");
 
-    if (control.hasEventHandler("advertising_state_change") ||
-        control.hasEventHandler("error")) {
-      _advertisingStateSubscription =
-          UniversalBlePeripheral.advertisingStateStream.listen((event) {
-        control.triggerEvent("advertising_state_change", {
-          "state": event.state.name,
-          "error": event.error,
+    if (_wantAdvertisingState != wantAdvertising) {
+      _advertisingStateSubscription?.cancel();
+      _advertisingStateSubscription = null;
+      if (wantAdvertising) {
+        _advertisingStateSubscription =
+            UniversalBlePeripheral.advertisingStateStream.listen((event) {
+          control.triggerEvent("advertising_state_change", {
+            "state": event.state.name,
+            "error": event.error,
+          });
+          if (event.error != null && control.hasEventHandler("error")) {
+            control.triggerEvent("error", event.error);
+          }
         });
-        if (event.error != null && control.hasEventHandler("error")) {
-          control.triggerEvent("error", event.error);
-        }
-      });
+      }
+      _wantAdvertisingState = wantAdvertising;
     }
 
-    if (control.hasEventHandler("subscription_change")) {
-      _subscriptionSubscription = UniversalBlePeripheral
-          .characteristicSubscriptionStream
-          .listen((event) {
-        control.triggerEvent("subscription_change", {
-          "device_id": event.deviceId,
-          "characteristic_uuid": event.characteristicId,
-          "is_subscribed": event.isSubscribed,
-          "name": event.name,
+    if (_wantSubscription != wantSubscription) {
+      _subscriptionSubscription?.cancel();
+      _subscriptionSubscription = null;
+      if (wantSubscription) {
+        _subscriptionSubscription = UniversalBlePeripheral
+            .characteristicSubscriptionStream
+            .listen((event) {
+          control.triggerEvent("subscription_change", {
+            "device_id": event.deviceId,
+            "characteristic_uuid": event.characteristicId,
+            "is_subscribed": event.isSubscribed,
+            "name": event.name,
+          });
         });
-      });
+      }
+      _wantSubscription = wantSubscription;
     }
 
-    if (control.hasEventHandler("connection_change")) {
-      _connectionSubscription =
-          UniversalBlePeripheral.connectionStateStream.listen((event) {
-        control.triggerEvent("connection_change", {
-          "device_id": event.deviceId,
-          "connected": event.connected,
+    if (_wantConnection != wantConnection) {
+      _connectionSubscription?.cancel();
+      _connectionSubscription = null;
+      if (wantConnection) {
+        _connectionSubscription =
+            UniversalBlePeripheral.connectionStateStream.listen((event) {
+          control.triggerEvent("connection_change", {
+            "device_id": event.deviceId,
+            "connected": event.connected,
+          });
         });
-      });
+      }
+      _wantConnection = wantConnection;
     }
 
-    if (control.hasEventHandler("service_added")) {
-      _serviceAddedSubscription =
-          UniversalBlePeripheral.serviceAddedStream.listen((event) {
-        control.triggerEvent("service_added", {
-          "service_uuid": event.serviceId,
-          "error": event.error,
+    if (_wantServiceAdded != wantServiceAdded) {
+      _serviceAddedSubscription?.cancel();
+      _serviceAddedSubscription = null;
+      if (wantServiceAdded) {
+        _serviceAddedSubscription =
+            UniversalBlePeripheral.serviceAddedStream.listen((event) {
+          control.triggerEvent("service_added", {
+            "service_uuid": event.serviceId,
+            "error": event.error,
+          });
         });
-      });
+      }
+      _wantServiceAdded = wantServiceAdded;
     }
 
-    if (control.hasEventHandler("mtu_change")) {
-      _mtuSubscription =
-          UniversalBlePeripheral.mtuChangedStream.listen((event) {
-        control.triggerEvent("mtu_change", {
-          "device_id": event.deviceId,
-          "mtu": event.mtu,
+    if (_wantMtu != wantMtu) {
+      _mtuSubscription?.cancel();
+      _mtuSubscription = null;
+      if (wantMtu) {
+        _mtuSubscription =
+            UniversalBlePeripheral.mtuChangedStream.listen((event) {
+          control.triggerEvent("mtu_change", {
+            "device_id": event.deviceId,
+            "mtu": event.mtu,
+          });
         });
-      });
+      }
+      _wantMtu = wantMtu;
     }
   }
 
@@ -156,8 +190,7 @@ class BluetoothPeripheralService extends FletService {
     Uint8List? value,
   ) {
     final key = BleUuidParser.string(characteristicId);
-    final cached = _characteristicValues[key];
-    final sliced = sliceBleValue(cached, offset);
+    final sliced = sliceBleValue(_characteristicValues[key], offset);
     if (control.hasEventHandler("characteristic_read")) {
       control.triggerEvent("characteristic_read", {
         "device_id": deviceId,
@@ -180,45 +213,22 @@ class BluetoothPeripheralService extends FletService {
     Uint8List? value,
   ) {
     final key = BleUuidParser.string(characteristicId);
-    final incoming = value ?? Uint8List(0);
-
-    if (!_writableCharacteristics.contains(key)) {
-      return PeripheralWriteRequestResult(
-        value: incoming,
-        offset: offset,
-        status: gattWriteNotPermitted,
-      );
-    }
-    if (offset < 0) {
-      return PeripheralWriteRequestResult(
-        value: incoming,
-        offset: offset,
-        status: gattInvalidOffset,
-      );
-    }
-    final existing = _characteristicValues[key];
-    final next = applyBleWrite(existing, offset, incoming);
-    if (next.length > maxGattAttributeLength) {
-      return PeripheralWriteRequestResult(
-        value: incoming,
-        offset: offset,
-        status: gattInvalidAttributeLength,
-      );
-    }
-
-    _characteristicValues[key] = next;
-    if (control.hasEventHandler("characteristic_write")) {
-      control.triggerEvent("characteristic_write", {
-        "device_id": deviceId,
-        "characteristic_uuid": key,
-        "offset": offset,
-        "value": incoming,
-      });
-    }
-    return PeripheralWriteRequestResult(
-      value: incoming,
+    return _handleWrite(
+      cacheKey: key,
+      cache: _characteristicValues,
+      writable: _writableCharacteristics,
       offset: offset,
-      status: gattSuccess,
+      value: value,
+      onAccepted: (incoming) {
+        if (control.hasEventHandler("characteristic_write")) {
+          control.triggerEvent("characteristic_write", {
+            "device_id": deviceId,
+            "characteristic_uuid": key,
+            "offset": offset,
+            "value": incoming,
+          });
+        }
+      },
     );
   }
 
@@ -259,9 +269,37 @@ class BluetoothPeripheralService extends FletService {
     final charKey = BleUuidParser.string(characteristicId);
     final descKey = BleUuidParser.string(descriptorId);
     final cacheKey = descriptorCacheKey(charKey, descKey);
+    return _handleWrite(
+      cacheKey: cacheKey,
+      cache: _descriptorValues,
+      writable: _writableDescriptors,
+      offset: offset,
+      value: value,
+      onAccepted: (incoming) {
+        if (control.hasEventHandler("descriptor_write")) {
+          control.triggerEvent("descriptor_write", {
+            "device_id": deviceId,
+            "characteristic_uuid": charKey,
+            "descriptor_uuid": descKey,
+            "offset": offset,
+            "value": incoming,
+          });
+        }
+      },
+    );
+  }
+
+  PeripheralWriteRequestResult _handleWrite({
+    required String cacheKey,
+    required Map<String, Uint8List> cache,
+    required Set<String> writable,
+    required int offset,
+    required Uint8List? value,
+    required void Function(Uint8List incoming) onAccepted,
+  }) {
     final incoming = value ?? Uint8List(0);
 
-    if (!_writableDescriptors.contains(cacheKey)) {
+    if (!writable.contains(cacheKey)) {
       return PeripheralWriteRequestResult(
         value: incoming,
         offset: offset,
@@ -275,8 +313,7 @@ class BluetoothPeripheralService extends FletService {
         status: gattInvalidOffset,
       );
     }
-    final next =
-        applyBleWrite(_descriptorValues[cacheKey], offset, incoming);
+    final next = applyBleWrite(cache[cacheKey], offset, incoming);
     if (next.length > maxGattAttributeLength) {
       return PeripheralWriteRequestResult(
         value: incoming,
@@ -285,16 +322,8 @@ class BluetoothPeripheralService extends FletService {
       );
     }
 
-    _descriptorValues[cacheKey] = next;
-    if (control.hasEventHandler("descriptor_write")) {
-      control.triggerEvent("descriptor_write", {
-        "device_id": deviceId,
-        "characteristic_uuid": charKey,
-        "descriptor_uuid": descKey,
-        "offset": offset,
-        "value": incoming,
-      });
-    }
+    cache[cacheKey] = next;
+    onAccepted(incoming);
     return PeripheralWriteRequestResult(
       value: incoming,
       offset: offset,
@@ -302,37 +331,45 @@ class BluetoothPeripheralService extends FletService {
     );
   }
 
-  String _servicesFingerprint(List<BlePeripheralService> services) {
-    return jsonEncode(services.map((s) => s.toJson()).toList());
-  }
-
   Future<void> _syncServices() async {
-    if (_syncingServices) return;
-    final services = parseBlePeripheralServices(control.get("services"));
-    final fingerprint = _servicesFingerprint(services);
+    if (_syncingServices) {
+      _syncPending = true;
+      return;
+    }
+
+    // Fingerprint the raw control payload before parsing objects.
+    final rawServices = control.get("services");
+    final fingerprint = jsonEncode(rawServices);
     if (fingerprint == _lastServicesFingerprint) {
       return;
     }
 
     _syncingServices = true;
     try {
-      final advertisingState =
-          await UniversalBlePeripheral.getAdvertisingState();
-      final wasAdvertising =
-          advertisingState == PeripheralAdvertisingState.advertising ||
-              advertisingState == PeripheralAdvertisingState.starting;
-      if (wasAdvertising) {
-        await UniversalBlePeripheral.stopAdvertising();
-      }
+      do {
+        _syncPending = false;
+        final services = parseBlePeripheralServices(control.get("services"));
+        final currentFingerprint = jsonEncode(control.get("services"));
 
-      await UniversalBlePeripheral.clearServices();
-      for (final service in services) {
-        await UniversalBlePeripheral.addService(service);
-      }
+        final advertisingState =
+            await UniversalBlePeripheral.getAdvertisingState();
+        final wasAdvertising =
+            advertisingState == PeripheralAdvertisingState.advertising ||
+                advertisingState == PeripheralAdvertisingState.starting;
+        if (wasAdvertising) {
+          await UniversalBlePeripheral.stopAdvertising();
+        }
 
-      _seedCacheFromServices(services, replace: true);
-      _lastServicesFingerprint = fingerprint;
-      // If we stopped advertising due to a services change, do not auto-restart.
+        await UniversalBlePeripheral.clearServices();
+        for (final service in services) {
+          await UniversalBlePeripheral.addService(service);
+        }
+
+        _seedCacheFromServices(services);
+        _cachedServiceUuids = services.map((s) => s.uuid).toList();
+        _lastServicesFingerprint = currentFingerprint;
+        // If we stopped advertising due to a services change, do not auto-restart.
+      } while (_syncPending);
     } catch (e, st) {
       debugPrint("BluetoothPeripheral._syncServices error: $e\n$st");
       if (control.hasEventHandler("error")) {
@@ -343,26 +380,18 @@ class BluetoothPeripheralService extends FletService {
     }
   }
 
-  void _seedCacheFromServices(
-    List<BlePeripheralService> services, {
-    bool replace = false,
-  }) {
-    if (replace) {
-      _characteristicValues.clear();
-      _descriptorValues.clear();
-      _writableCharacteristics.clear();
-      _writableDescriptors.clear();
-    }
+  void _seedCacheFromServices(List<BlePeripheralService> services) {
+    _characteristicValues.clear();
+    _descriptorValues.clear();
+    _writableCharacteristics.clear();
+    _writableDescriptors.clear();
 
     for (final service in services) {
       for (final characteristic in service.characteristics) {
         final charId = BleUuidParser.string(characteristic.uuid);
-        if (characteristic.value != null) {
-          _characteristicValues[charId] =
-              Uint8List.fromList(characteristic.value!);
-        } else if (replace) {
-          _characteristicValues.putIfAbsent(charId, () => Uint8List(0));
-        }
+        _characteristicValues[charId] = characteristic.value != null
+            ? Uint8List.fromList(characteristic.value!)
+            : Uint8List(0);
 
         final writable = characteristic.permissions
                 .contains(PeripheralAttributePermission.writeable) ||
@@ -371,36 +400,24 @@ class BluetoothPeripheralService extends FletService {
                 .contains(CharacteristicProperty.writeWithoutResponse);
         if (writable) {
           _writableCharacteristics.add(charId);
-        } else if (replace) {
-          _writableCharacteristics.remove(charId);
         }
 
         for (final descriptor in characteristic.descriptors) {
           final descId = BleUuidParser.string(descriptor.uuid);
           final key = descriptorCacheKey(charId, descId);
-          if (descriptor.value != null) {
-            _descriptorValues[key] = Uint8List.fromList(descriptor.value!);
-          } else if (replace) {
-            _descriptorValues.putIfAbsent(key, () => Uint8List(0));
-          }
+          _descriptorValues[key] = descriptor.value != null
+              ? Uint8List.fromList(descriptor.value!)
+              : Uint8List(0);
 
           final descWritable = descriptor.permissions
                   ?.contains(PeripheralAttributePermission.writeable) ??
               false;
           if (descWritable) {
             _writableDescriptors.add(key);
-          } else if (replace) {
-            _writableDescriptors.remove(key);
           }
         }
       }
     }
-  }
-
-  List<String> _serviceUuidsFromProp() {
-    return parseBlePeripheralServices(control.get("services"))
-        .map((s) => s.uuid)
-        .toList();
   }
 
   Future<dynamic> _invokeMethod(String name, dynamic args) async {
@@ -420,7 +437,11 @@ class BluetoothPeripheralService extends FletService {
           {
             final serviceUuids =
                 (args["service_uuids"] as List?)?.cast<String>() ??
-                    _serviceUuidsFromProp();
+                    (_cachedServiceUuids.isNotEmpty
+                        ? _cachedServiceUuids
+                        : parseBlePeripheralServices(control.get("services"))
+                            .map((s) => s.uuid)
+                            .toList());
             await UniversalBlePeripheral.startAdvertising(
               services: serviceUuids,
               localName: args["local_name"] as String?,
@@ -464,8 +485,10 @@ class BluetoothPeripheralService extends FletService {
             return okResult(length);
           }
         default:
-          throw Exception("Unknown BluetoothPeripheral method: $name");
+          throw _UnknownBluetoothPeripheralMethod(name);
       }
+    } on _UnknownBluetoothPeripheralMethod {
+      rethrow;
     } catch (error, stackTrace) {
       debugPrint("BluetoothPeripheral.$name error: $error\n$stackTrace");
       return errorResult(error);
@@ -483,12 +506,11 @@ class BluetoothPeripheralService extends FletService {
     _serviceAddedSubscription?.cancel();
     _mtuSubscription?.cancel();
 
-    if (_ownsHandlers && _activeInstance == this) {
+    if (_activeInstance == this) {
       unawaited(UniversalBlePeripheral.stopAdvertising());
       unawaited(UniversalBlePeripheral.clearServices());
       _clearHandlers();
       _activeInstance = null;
-      _ownsHandlers = false;
     }
 
     _characteristicValues.clear();

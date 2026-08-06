@@ -1,3 +1,5 @@
+import asyncio
+
 import flet as ft
 import flet_bluetooth as fbt
 
@@ -11,6 +13,7 @@ async def main(page: ft.Page):
     services_list = ft.Column(spacing=4, tight=True)
     discovered: dict[str, fbt.BluetoothDevice] = {}
     selected_id: list[str | None] = [None]
+    render_scheduled = False
 
     def snack(message: str):
         page.show_dialog(ft.SnackBar(content=ft.Text(message)))
@@ -55,9 +58,19 @@ async def main(page: ft.Page):
                 )
             )
 
-    def on_scan_result(e: fbt.BluetoothScanResultEvent):
-        discovered[e.device.device_id] = e.device
+    async def flush_devices():
+        nonlocal render_scheduled
+        await asyncio.sleep(0.2)
+        render_scheduled = False
         render_devices()
+
+    def on_scan_result(e: fbt.BluetoothScanResultEvent):
+        nonlocal render_scheduled
+        discovered[e.device.device_id] = e.device
+        if not render_scheduled:
+            render_scheduled = True
+            page.run_task(flush_devices)
+
 
     def on_connection_change(e: fbt.BluetoothConnectionChangeEvent):
         state = "connected" if e.is_connected else "disconnected"
