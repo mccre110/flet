@@ -8,9 +8,17 @@
 
 Adds Bluetooth Low Energy (BLE) capabilities to your [Flet](https://flet.dev) apps.
 
-It is based on the [universal_ble](https://pub.dev/packages/universal_ble) Flutter package.
+It is based on the [universal_ble](https://pub.dev/packages/universal_ble) Flutter package
+(BSD-3-Clause). Classic Bluetooth is not supported.
+
+| Service | Role |
+|---------|------|
+| `Bluetooth` | Central / client — scan, connect, GATT |
+| `BluetoothPeripheral` | Peripheral / server — advertise, GATT server |
 
 > **Important:** Add `Bluetooth` / `BluetoothPeripheral` instances to `page.services` before calling methods.
+>
+> Only one `BluetoothPeripheral` instance may be active at a time.
 
 ## Documentation
 
@@ -18,9 +26,20 @@ Detailed documentation to this package can be found [here](https://flet.dev/docs
 
 ## Platform Support
 
+### Bluetooth (central)
+
 | Platform | Windows | macOS | Linux | iOS | Android | Web |
 |----------|---------|-------|-------|-----|---------|-----|
-| Supported|    ✅    |   ✅   |   ✅   |  ✅  |    ✅    |  ✅  |
+| Supported|    ✅    |   ✅   |   ✅   |  ✅  |    ✅    |  ⚠️  |
+
+### BluetoothPeripheral
+
+| Platform | Windows | macOS | Linux | iOS | Android | Web |
+|----------|---------|-------|-------|-----|---------|-----|
+| Supported|    ✅    |   ✅   |   ⚠️   |  ✅  |    ✅    |  ❌  |
+
+Web Bluetooth (central) typically requires a user gesture. Linux peripheral support
+depends on upstream completeness.
 
 ## Usage
 
@@ -38,6 +57,19 @@ To install the `flet-bluetooth` package and add it to your project dependencies:
     pip install flet-bluetooth
     ```
     After this, you will have to manually add this package to your `requirements.txt` or `pyproject.toml`.
+
+When packaging with `flet build`, declare Bluetooth permissions via the predefined bundle:
+
+```bash
+flet build <target_platform> --permissions bluetooth
+```
+
+or in `pyproject.toml`:
+
+```toml
+[tool.flet]
+permissions = ["bluetooth"]
+```
 
 ### Examples
 

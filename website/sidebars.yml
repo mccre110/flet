@@ -349,6 +349,10 @@ docs:
       AudioRecorder: services/audiorecorder/index.md
       Barometer: services/barometer.md
       Battery: services/battery.md
+      Bluetooth:
+        _index: services/bluetooth/index.md
+        Bluetooth: services/bluetooth/bluetooth.md
+        BluetoothPeripheral: services/bluetooth/bluetoothperipheral.md
       BrowserContextMenu: services/browsercontextmenu.md
       Clipboard: services/clipboard.md
       Connectivity: services/connectivity.md
@@ -429,6 +433,29 @@ docs:
         - services/audiorecorder/types/iosaudiocategoryoption.md
         - services/audiorecorder/types/iosrecorderconfiguration.md
       - types/autocompletesuggestion.md
+      - Bluetooth:
+        - services/bluetooth/types/bluetoothandroidscanoptions.md
+        - services/bluetooth/types/bluetoothavailabilitystate.md
+        - services/bluetooth/types/bluetoothcharacteristic.md
+        - services/bluetooth/types/bluetoothconnectionstate.md
+        - services/bluetooth/types/bluetoothdescriptor.md
+        - services/bluetooth/types/bluetoothdevice.md
+        - services/bluetooth/types/bluetoothqueuetype.md
+        - services/bluetooth/types/bluetoothscanfilter.md
+        - services/bluetooth/types/bluetoothservice.md
+        - services/bluetooth/types/bluetoothweboptions.md
+        - services/bluetooth/types/characteristicproperty.md
+        - services/bluetooth/types/exclusionfilter.md
+        - services/bluetooth/types/gattcharacteristic.md
+        - services/bluetooth/types/gattdescriptor.md
+        - services/bluetooth/types/gattservice.md
+        - services/bluetooth/types/manufacturerdata.md
+        - services/bluetooth/types/manufacturerdatafilter.md
+        - services/bluetooth/types/peripheraladvertisingstate.md
+        - services/bluetooth/types/peripheralattributepermission.md
+        - services/bluetooth/types/peripheralavailabilitystate.md
+        - services/bluetooth/types/peripheralcapabilities.md
+        - services/bluetooth/types/peripheralmanufacturerdata.md
       - types/blur.md
       - types/border.md
       - types/borderradius.md
@@ -809,6 +836,17 @@ docs:
       - types/barometerreadingevent.md
       - types/batterystate.md
       - types/batterystatechangeevent.md
+      - Bluetooth:
+        - services/bluetooth/types/bluetoothavailabilitychangeevent.md
+        - services/bluetooth/types/bluetoothcharacteristicvalueevent.md
+        - services/bluetooth/types/bluetoothconnectionchangeevent.md
+        - services/bluetooth/types/bluetoothpairingstatechangeevent.md
+        - services/bluetooth/types/bluetoothscanresultevent.md
+        - services/bluetooth/types/peripheraladvertisingstatechangeevent.md
+        - services/bluetooth/types/peripheralcharacteristicreadevent.md
+        - services/bluetooth/types/peripheralcharacteristicwriteevent.md
+        - services/bluetooth/types/peripheralconnectionchangeevent.md
+        - services/bluetooth/types/peripheralsubscriptionchangeevent.md
       - types/connectivitytype.md
       - types/connectivitychangeevent.md
       - types/canvasresizeevent.md
