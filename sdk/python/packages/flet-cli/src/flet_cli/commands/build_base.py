@@ -234,6 +234,38 @@ class BaseBuildCommand(BaseFlutterCommand):
                 },
                 "android_features": {},
             },
+            "bluetooth": {
+                "ios_info_plist": {
+                    "NSBluetoothAlwaysUsageDescription": "This app uses Bluetooth to connect to nearby devices.",  # noqa: E501
+                    "NSBluetoothPeripheralUsageDescription": "This app uses Bluetooth to advertise services to nearby devices.",  # noqa: E501
+                },
+                "macos_info_plist": {
+                    "NSBluetoothAlwaysUsageDescription": "This app uses Bluetooth to connect to nearby devices.",  # noqa: E501
+                    "NSBluetoothPeripheralUsageDescription": "This app uses Bluetooth to advertise services to nearby devices.",  # noqa: E501
+                },
+                "macos_entitlements": {
+                    "com.apple.security.device.bluetooth": True
+                },
+                "android_permissions": {
+                    "android.permission.BLUETOOTH_CONNECT": True,
+                    "android.permission.BLUETOOTH_SCAN": {
+                        "usesPermissionFlags": "neverForLocation"
+                    },
+                    "android.permission.BLUETOOTH_ADVERTISE": True,
+                    "android.permission.BLUETOOTH": {"maxSdkVersion": "30"},
+                    "android.permission.BLUETOOTH_ADMIN": {"maxSdkVersion": "30"},
+                    "android.permission.ACCESS_COARSE_LOCATION": {
+                        "maxSdkVersion": "28"
+                    },
+                    "android.permission.ACCESS_FINE_LOCATION": {
+                        "maxSdkVersion": "30"
+                    },
+                },
+                "android_features": {
+                    "android.hardware.bluetooth": False,
+                    "android.hardware.bluetooth_le": False,
+                },
+            },
         }
 
         # create and display build-platform-matrix table
@@ -627,7 +659,13 @@ class BaseBuildCommand(BaseFlutterCommand):
             action="extend",
             nargs="+",
             default=[],
-            choices=["location", "camera", "microphone", "photo_library"],
+            choices=[
+                "location",
+                "camera",
+                "microphone",
+                "photo_library",
+                "bluetooth",
+            ],
             help="The list of pre-defined cross-platform permissions for iOS, Android "
             "and macOS builds",
         )

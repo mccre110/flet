@@ -21,6 +21,7 @@ DEFAULT_PACKAGES: list[str] = [
     "flet_ads",
     "flet_audio",
     "flet_audio_recorder",
+    "flet_bluetooth",
     "flet_camera",
     "flet_charts",
     "flet_code_editor",

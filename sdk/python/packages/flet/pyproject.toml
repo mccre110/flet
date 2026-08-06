@@ -54,6 +54,7 @@ extensions = [
     "flet-ads",
     "flet-audio",
     "flet-audio-recorder",
+    "flet-bluetooth",
     "flet-camera",
     "flet-charts",
     "flet-code-editor",

@@ -708,6 +708,7 @@ jobs:
             flet-ads
             flet-audio
             flet-audio-recorder
+            flet-bluetooth
             flet-camera
             flet-charts
             flet-code-editor
@@ -987,6 +988,7 @@ jobs:
             flet_ads \
             flet_audio \
             flet_audio_recorder \
+            flet_bluetooth \
             flet_camera \
             flet_charts \
             flet_code_editor \
