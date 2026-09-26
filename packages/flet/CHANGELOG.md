@@ -1,3 +1,12 @@
+## 1.0.2
+
+* Pass `Semantics.identifier` through to Flutter's `Semantics` widget and add `Tester.findBySemanticsIdentifier()` so tests can match nodes by native accessibility identifier ([#6832](https://github.com/flet-dev/flet/pull/6832)) by @mccre110.
+* Fix `Button`, `FilledButton`, `FilledTonalButton`, `OutlinedButton` and `TextButton` rendering an error box when `icon` is set without `content`. `ButtonControl` now uses the `.icon(...)` constructors only when both `icon` and `content` are provided; otherwise it builds the plain button with whichever one is set as its child, so icon-only buttons render the icon centered ([#6886](https://github.com/flet-dev/flet/issues/6886), [#6889](https://github.com/flet-dev/flet/pull/6889)) by @FeodorFitsner.
+
+## 1.0.1
+
+_No changes in the `flet` Dart package; version bumped for release coordination with the Python-side fix for child components losing click events after wrapper re-renders ([#6857](https://github.com/flet-dev/flet/issues/6857), [#6859](https://github.com/flet-dev/flet/pull/6859))._
+
 ## 1.0.0
 
 * Add `runClientActions()` and `runControlActions()` in `utils/client_actions.dart`, which perform a control's `url` and `action` properties on the client, synchronously, from inside the gesture callback that triggered them. `runClientActions()` resolves each action's target service through `FletBackend.controlsIndex` and calls `Control.invokeMethod()` on it without awaiting, because browsers grant gesture-gated APIs - opening a file picker, writing to the clipboard, `navigator.share`, `window.open` - only while user activation is live, and activation does not survive an async gap. The new `Control.hasInvokeMethodListeners` getter guards that path: `Control.invokeMethod()` waits for a listener when the target service is not mounted yet, and awaiting that wait would silently consume the gesture, so an unresolvable action is skipped and logged instead. A new `Control.hasControlActions` extension getter reports whether a control has anything to run, for controls that only install a tap handler when something is wired to them. `openWebBrowser()` is no longer called directly by `Button`, `Container`, `IconButton`, `ListTile`, `CupertinoListTile`, `CupertinoButton` and `FloatingActionButton`, which now dispatch through `runControlActions()`; `parseTextSpans()` and `parseInlineSpan()` take an optional trailing `BuildContext` so a `TextSpan` can carry actions too.
